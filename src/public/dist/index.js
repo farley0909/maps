@@ -40,12 +40,19 @@ function exibirModal(lat, long, map) {
     });
     //return {nomeHemonucle, desc}
 }
-function salvaDados(nome, desc, lat, long) {
-    console.log("Dados que vão ser salvos");
-    console.log(nome);
-    console.log(desc);
-    console.log(lat);
-    console.log(long);
+async function salvaDados(nome, desc, lat, long) {
+    let data = {
+        nome: nome,
+        desc: desc,
+        lat: lat,
+        long: long
+    };
+    console.log(data);
+    let res = await fetch('http://localhost:8080/cadastro/', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+    let req = await res.json();
 }
 // Adds a marker to the map.
 function addMarker(lat, long, nome, desc, map) {
