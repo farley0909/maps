@@ -1,24 +1,33 @@
 import { Router } from "express";
 import { client } from "../connection/factory";
-
-
+const Client = require('pg').Client
 let route_cadastro = Router()
+
 //select  ST_AsText(geometria) from ponto_de_interesse
+
 route_cadastro.post('/cadastro/',async (req, res)=>{
-    let {nome, desc, lat, long} = req.body
-    console.log(nome)
-    console.log(desc)
-    console.log(lat)
-    console.log(long)
+  let {nome, desc, lat, long} = req.body
     try {
-       await client.connect()
-        client.query(`insert into ponto_de_interesse (nome, descricao, geometria) values (${nome}, ${desc}, ST_GeomFromText('POINT(${lat}, ${long})'))`).then(result => {
-            const ts = result.rows
-            console.log(ts)
-            res.json({Resultado: "Usuário cadastrado"})
+          let client = new Client({
+            user:"postgres",
+            password:"postgres",
+            host:"localhost",
+            port:5432,
+            database:'postgres'
         })
+         await client.connect()
+        console.log(client)
+      
+        let result = await client.query(`INSERT INTO ponto_de_interesse (nome, descricao, geometria) VALUES ('${nome}','${desc}', ST_GeomFromText('POINT(${lat} ${long})') )
+        `)
+        let resultado = result.rows
+        console.table(resultado)
+        await client.end()
+        res.json({Resultado: "Usuário cadastrado"})
+         
 
       } catch (error) {
+        console.log(error.message)
         res.json({Resultado: "Houve um problema"})
       }
 })

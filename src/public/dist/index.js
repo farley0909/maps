@@ -1,12 +1,50 @@
 // In the following example, markers appear when the user clicks on the map.
 // Each marker is labeled with a single alphabetical character.
-function initMap() {
+async function initMap() {
     //Centraliza o mapa em cajazeiras
     const cajazeiras = { lat: -6.88634, lng: -38.5614 };
     const map = new google.maps.Map(document.getElementById("map"), {
         zoom: 14,
         center: cajazeiras,
     });
+    try {
+        let request = await fetch('http://localhost:8080/locais/');
+        let pontos = await request.json();
+        pontos.Resultado.forEach(element => {
+            let splitado = element.st_astext.split('(');
+            let t = splitado[1].split(')');
+            let c = t[0].split(' ');
+            let lat = c[0];
+            let long = c[1];
+            console.log("Latitude: ", parseFloat(lat), "Longitude", long);
+            let defPos = { lat: parseFloat(lat), lng: parseFloat(long) };
+            const contentString = '<div id="content">' +
+                '<div id="siteNotice">' +
+                "</div>" +
+                '<h1 id="firstHeading" class="firstHeading">' + element.nome + '</h1>' +
+                '<div id="bodyContent">' +
+                "<p>" + element.descricao + "</p>" +
+                "</div>" +
+                "</div>";
+            const infowindow = new google.maps.InfoWindow({
+                content: contentString,
+                ariaLabel: element.nome,
+            });
+            const marker = new google.maps.Marker({
+                position: defPos,
+                map,
+                title: element.nome,
+            });
+            marker.addListener("click", () => {
+                infowindow.open({
+                    anchor: marker,
+                    map,
+                });
+            });
+        });
+    }
+    catch (error) {
+    }
     //fechaModal
     const btnCancelar = document.getElementById("cancelar");
     btnCancelar.addEventListener("click", fechaModal);
@@ -25,7 +63,6 @@ function fechaModal() {
     modal.style.display = "none";
 }
 function exibirModal(lat, long, map) {
-    console.log(lat, long);
     let fade = document.getElementById("fade");
     let modal = document.getElementById("modal");
     fade.style.display = "block";
@@ -36,7 +73,7 @@ function exibirModal(lat, long, map) {
         let desc = document.getElementById("descricao").value;
         await salvaDados(nomeHemonucle, desc, lat, long);
         addMarker(lat, long, nomeHemonucle, desc, map);
-        fechaModal();
+        location.reload();
     });
     //return {nomeHemonucle, desc}
 }
@@ -47,16 +84,24 @@ async function salvaDados(nome, desc, lat, long) {
         lat: lat,
         long: long
     };
-    console.log(data);
-    let res = await fetch('http://localhost:8080/cadastro/', {
-        method: 'POST',
-        body: JSON.stringify(data)
-    });
-    let req = await res.json();
+    try {
+        let res = await fetch('http://localhost:8080/cadastro/', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        let req = await res.json();
+        console.log("Resposta: ", req);
+    }
+    catch (error) {
+        console.log(error.message);
+    }
 }
 // Adds a marker to the map.
 function addMarker(lat, long, nome, desc, map) {
-    console.log("Recebidos", nome);
     const p = new google.maps.Marker({
         position: { lat: lat, lng: long },
         map: map,
